@@ -1,10 +1,19 @@
-name: Python check
+name: Test Python code
 
 on:
   push:
     branches: [ main ]
+    paths-ignore:
+      - "**.md"
+      - ".devcontainer/**"
+      - ".github/**"
   pull_request:
     branches: [ main ]
+    paths-ignore:
+      - "**.md"
+      - ".devcontainer/**"
+      - ".github/**"
+  workflow_call:
 
 jobs:
   test_package:
