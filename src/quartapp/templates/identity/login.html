@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="px-4 pb-4 pt-2 d-flex justify-content-center align-items-center" style="height: 100vh;">
+
+    {% if user_code %}
+    <ol>
+      <li>To sign in, type <b>{{ user_code }}</b> into
+        <a href="{{ auth_uri }}" target="_blank">{{ auth_uri }}</a>
+        to authenticate.
+      </li>
+      <li>And then <a href="{{ auth_response_url }}">proceed</a>.</li>
+    </ol>
+    {% else %}
+    <p>
+       To use this application, you must
+        <a href="{{ auth_uri }}"">sign in.</a></p>
+    {% endif %}
+
+    {% if reset_password_url %}
+    <hr>
+    <p><a href='{{ reset_password_url }}'>Reset password</a></p>
+    {% endif %}
+</div>
+
+{% endblock %}
