@@ -1,3 +1,8 @@
+if ($env:GITHUB_ACTIONS) {
+  Write-Host "This script does not currently work in GitHub Actions. Please run azd up locally first to set up Microsoft Entra application registration."
+  exit
+}
+
 . ./scripts/load_env.ps1
 
 $pythonCmd = Get-Command python -ErrorAction SilentlyContinue
