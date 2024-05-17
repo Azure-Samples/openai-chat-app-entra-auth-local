@@ -1,6 +1,6 @@
 if ($env:GITHUB_ACTIONS) {
   Write-Host "This script does not currently work in GitHub Actions. Please run azd up locally first to set up Microsoft Entra application registration."
-  exit
+  exit 0
 }
 
 . ./scripts/load_env.ps1
