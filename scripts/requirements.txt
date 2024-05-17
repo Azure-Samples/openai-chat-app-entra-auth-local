@@ -1,5 +1,2 @@
 azure-identity
 msgraph-sdk
-azure-mgmt-keyvault
-azure-mgmt-resource
-azure-keyvault-secrets
