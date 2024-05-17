@@ -18,7 +18,7 @@ since the local app needs credentials for Microsoft Entra and Azure OpenAI to wo
 * [Bicep files](https://docs.microsoft.com/azure/azure-resource-manager/bicep/) for provisioning Azure resources, including an Azure OpenAI resource, Azure Container Apps, Azure Container Registry, Azure Cache for Redis, and Azure Log Analytics.
 * Python scripts that use the [msgraph-sdk](https://pypi.org/project/msgraph-sdk/) package to create a Microsoft Entra application and service principal, and to grant the service principal permissions to the application.
 
-![Screenshot of the chat app](docs/screenshot_chatapp.png.png)
+![Screenshot of the chat app](docs/screenshot_chatapp.png)
 
 ## Opening the project
 
