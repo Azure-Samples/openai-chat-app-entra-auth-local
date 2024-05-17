@@ -1,77 +1,129 @@
----
-name: Simple Chat Application using Azure OpenAI (Python)
-description: A sample chat app that uses Python and the Quart framework to stream chat completions from the OpenAI SDK. Deployable to Azure Container Apps.
-languages:
-- azdeveloper
-- python
-- bicep
-- html
-products:
-- azure
-- azure-container-apps
-- azure-openai
-- azure-container-registry
-page_type: sample
-urlFragment: openai-chat-app-quickstart
----
-<!-- YAML front-matter schema: https://review.learn.microsoft.com/en-us/help/contribute/samples/process/onboarding?branch=main#supported-metadata-fields-for-readmemd -->
+# OpenAI Chat Application with Microsoft Entra Authentication (Python)
 
-# Simple Chat Application using Azure OpenAI (Python)
 
-This repository includes a simple Python [Quart](https://quart.palletsprojects.com/en/latest/)
-app that streams responses from ChatGPT to an HTML/JS frontend using [JSON Lines](http://jsonlines.org/)
-over a [ReadableStream](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream).
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/Azure-Samples/openai-chat-app-entra-auth-local)
+[![Open in Dev Containers](https://img.shields.io/static/v1?style=for-the-badge&label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/azure-samples/openai-chat-app-entra-auth-local)
 
-The repository is designed for use with [Docker containers](https://www.docker.com/), both for local development and deployment, and includes infrastructure files for deployment to [Azure Container Apps](https://learn.microsoft.com/azure/container-apps/overview). 🐳
+This repository includes a Python app that uses Azure OpenAI to generate responses to user messages, and Microsoft Entra for user authentication.
 
-![Architecture diagram: Azure Container Apps inside Container Apps Environment, connected to Container Registry with Container, connected to Managed Identity for Azure OpenAI](readme_diagram.png)
+The project includes all the infrastructure and configuration needed to setup Microsoft Entra authentication, provision Azure OpenAI resources (with keyless access), and deploy the app to [Azure Container Apps](https://learn.microsoft.com/azure/container-apps/overview) using the [Azure Developer CLI](https://learn.microsoft.com/azure/developer/azure-developer-cli/overview).
 
 We recommend first going through the [deployment steps](#deployment) before running this app locally,
-since the local app needs credentials for Azure OpenAI to work properly.
+since the local app needs credentials for Microsoft Entra and Azure OpenAI to work properly.
+
+## Features
+
+* A Python [Quart](https://quart.palletsprojects.com/en/latest/) backend that uses the [identity](https://pypi.org/project/identity/) and [msal](https://pypi.org/project/msal/) packages to authenticate users with Microsoft Entra, and the [openai](https://pypi.org/project/openai/) package to generate responses to user messages. Sessions are stored in Redis.
+* A basic HTML/JS frontend that streams responses from the backend using [JSON Lines](http://jsonlines.org/) over a [ReadableStream](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream).
+* [Bicep files](https://docs.microsoft.com/azure/azure-resource-manager/bicep/) for provisioning Azure resources, including an Azure OpenAI resource, Azure Container Apps, Azure Container Registry, Azure Cache for Redis, and Azure Log Analytics.
+* Python scripts that use the [msgraph-sdk](https://pypi.org/project/msgraph-sdk/) package to create a Microsoft Entra application and service principal, and to grant the service principal permissions to the application.
+
+![Screenshot of the chat app](docs/screenshot_chatapp.png.png)
 
 ## Opening the project
 
-This project has [Dev Container support](https://code.visualstudio.com/docs/devcontainers/containers), so it will be be setup automatically if you open it in Github Codespaces or in local VS Code with the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers).
+You have a few options for getting started with this template.
+The quickest way to get started is GitHub Codespaces, since it will setup all the tools for you, but you can also [set it up locally](#local-environment).
 
-If you're not using one of those options for opening the project, then you'll need to:
+### GitHub Codespaces
 
-1. Create a [Python virtual environment](https://docs.python.org/3/tutorial/venv.html#creating-virtual-environments) and activate it.
+You can run this template virtually by using GitHub Codespaces. The button will open a web-based VS Code instance in your browser:
 
-2. Install the requirements:
+1. Open the template (this may take several minutes):
+
+    [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/Azure-Samples/openai-chat-app-entra-auth-local)
+
+2. Open a terminal window
+3. Continue with the [deployment steps](#deployment)
+
+
+### VS Code Dev Containers
+
+A related option is VS Code Dev Containers, which will open the project in your local VS Code using the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers):
+
+1. Start Docker Desktop (install it if not already installed)
+2. Open the project:
+
+    [![Open in Dev Containers](https://img.shields.io/static/v1?style=for-the-badge&label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/azure-samples/openai-chat-app-entra-auth-local)
+
+3. In the VS Code window that opens, once the project files show up (this may take several minutes), open a terminal window.
+4. Continue with the [deployment steps](#deployment)
+
+### Local Environment
+
+If you're not using one of the above options for opening the project, then you'll need to:
+
+1. Make sure the following tools are installed:
+
+    * [Azure Developer CLI (azd)](https://aka.ms/install-azd)
+    * [Python 3.10+](https://www.python.org/downloads/)
+    * [Redis](https://redis.io/download)
+    * [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+    * [Git](https://git-scm.com/downloads)
+
+2. Download the project code:
 
     ```shell
-    python3 -m pip install -r requirements-dev.txt
+    azd init -t openai-chat-app-entra-auth-local
     ```
 
-3. Install the app as an editable package:
+3. Open the project folder
+4. Create a [Python virtual environment](https://docs.python.org/3/tutorial/venv.html#creating-virtual-environments) and activate it.
+5. Install required Python packages:
+
+    ```shell
+    pip install -r requirements-dev.txt
+    ```
+
+6. Install the app as an editable package:
 
     ```shell
     python3 -m pip install -e src
     ```
 
+7. Start a redis server:
+
+    ```shell
+    brew services start redis
+    ```
+
+7. Continue with the [deployment steps](#deployment)
+
 ## Deployment
 
-This repo is set up for deployment on Azure Container Apps using the configuration files in the `infra` folder.
+Once you've opened the project in [Codespaces](#github-codespaces), in [Dev Containers](#vs-code-dev-containers), or [locally](#local-environment), you can deploy it to Azure.
 
-### Prerequisites for deployment
+### Azure account setup
 
 1. Sign up for a [free Azure account](https://azure.microsoft.com/free/) and create an Azure Subscription.
 2. Request access to Azure OpenAI Service by completing the form at [https://aka.ms/oai/access](https://aka.ms/oai/access) and awaiting approval.
-3. Install the [Azure Developer CLI](https://learn.microsoft.com/azure/developer/azure-developer-cli/install-azd). (If you open this repository in Codespaces or with the VS Code Dev Containers extension, that part will be done for you.)
+3. Check that you have the necessary permissions:
+  * Your Azure account must have `Microsoft.Authorization/roleAssignments/write` permissions, such as [Role Based Access Control Administrator](https://learn.microsoft.com/azure/role-based-access-control/built-in-roles#role-based-access-control-administrator-preview), [User Access Administrator](https://learn.microsoft.com/azure/role-based-access-control/built-in-roles#user-access-administrator), or [Owner](https://learn.microsoft.com/azure/role-based-access-control/built-in-roles#owner). If you don't have subscription-level permissions, you must be granted [RBAC](https://learn.microsoft.com/azure/role-based-access-control/built-in-roles#role-based-access-control-administrator-preview) for an existing resource group and [deploy to that existing group](docs/deploy_existing.md#resource-group).
+  * Your Azure account also needs `Microsoft.Resources/deployments/write` permissions on the subscription level.
 
-### Deployment from scratch
+### Deployment with Azure Developer CLI
 
-1. Login to Azure:
+1. Sign in to your Azure account:
 
     ```shell
     azd auth login
     ```
+
+    If you have any issues with that command, you may also want to try `azd auth login --use-device-code`.
 
 1. If you will be setting up Entra authentication in a different tenant, login with that tenant as well:
 
     ```shell
     azd auth login --tenant-id AUTH-TENANT-ID
     ```
+
+1. Create a new azd environment:
+
+    ```shell
+    azd env new
+    ```
+
+    This will create a folder under `.azure/` in your project to store the configuration for this deployment. You may have multiple azd environments if desired.
 
 1. Set the `AZURE_AUTH_TENANT_ID` azd environment variable to whichever tenant ID you want to use for Entra authentication:
 
@@ -94,22 +146,6 @@ This repo is set up for deployment on Azure Container Apps using the configurati
     azd deploy
     ```
 
-### Deployment with existing resources
-
-If you already have an OpenAI resource and would like to re-use it, first follow these steps.
-
-1. Run `azd env new` to create a new environment. Provide a name that will be used in the name of *new* resources that are created.
-2. Run `azd env set` to specify the values for the existing OpenAI resource.
-
-   ```shell
-   azd env set AZURE_OPENAI_RESOURCE {name of OpenAI resource}
-   azd env set AZURE_OPENAI_RESOURCE_GROUP {name of resource group that it's inside}
-   azd env set AZURE_OPENAI_RESOURCE_GROUP_LOCATION {location for that group}
-   azd env set AZURE_OPENAI_SKU_NAME {name of the SKU, defaults to "S0"}
-   ```
-
-3. Then follow the steps for deployment above.
-
 ### CI/CD pipeline
 
 This project includes a Github workflow for deploying the resources to Azure
@@ -120,7 +156,19 @@ to be stored as Github action secrets. To set that up, run:
 azd pipeline config
 ```
 
-### Costs
+## Local development
+
+Assuming you've run the steps in [Opening the project](#opening-the-project) and have run `azd up`, you can now run the Quart app locally using the development server:
+
+```shell
+python -m quart --app src.quartapp run --port 50505 --reload
+```
+
+This will start the app on port 50505, and you can access it at `http://localhost:50505`.
+
+To save costs during development, you may point the app at a [local LLM server](docs/local_ollama.md).
+
+## Costs
 
 Pricing varies per region and usage, so it isn't possible to predict exact costs for your usage.
 The majority of the Azure resources used in this infrastructure are on usage-based pricing tiers.
@@ -137,55 +185,21 @@ You can try the [Azure pricing calculator](https://azure.com/e/2176802ea14941e49
 ⚠️ To avoid unnecessary costs, remember to take down your app if it's no longer in use,
 either by deleting the resource group in the Portal or running `azd down`.
 
-## Local development without Docker
 
-Assuming you've run the steps in [Opening the project](#opening-the-project) and have run `azd up`, you can now run the Quart app locally using the development server:
+## Security Guidelines
 
-```shell
-brew services start redis
-python -m quart --app src.quartapp run --port 50505 --reload
-```
+This template uses [Managed Identity](https://learn.microsoft.com/entra/identity/managed-identities-azure-resources/overview) for authenticating to the Azure services used (Azure OpenAI, Azure Cache for Redis). It uses an [Azure Key Vault](https://learn.microsoft.com/azure/key-vault/general/basic-concepts) to store the client secret for the Microsoft Entra application.
 
-### Using a local LLM server
+Additionally, we have added a [GitHub Action](https://github.com/microsoft/security-devops-action) that scans the infrastructure-as-code files and generates a report containing any detected issues. To ensure continued best practices in your own repository, we recommend that anyone creating solutions based on our templates ensure that the [Github secret scanning](https://docs.github.com/code-security/secret-scanning/about-secret-scanning) setting is enabled.
 
-You may want to save costs by developing against a local LLM server, such as
-[llamafile](https://github.com/Mozilla-Ocho/llamafile/). Note that a local LLM
-will generally be slower and not as sophisticated.
+You may want to consider additional security measures, such as:
 
-Once you've got your local LLM running and serving an OpenAI-compatible endpoint, define `LOCAL_OPENAI_ENDPOINT` in your `.env` file.
+* Protecting the Azure Cache for Redis instance with a firewall and/or [Virtual Network](https://learn.microsoft.com/azure/azure-cache-for-redis/cache-network-isolation).
+* Protecting the Azure Container Apps instance with a [firewall](https://learn.microsoft.com/azure/container-apps/waf-app-gateway) and/or [Virtual Network](https://learn.microsoft.com/azure/container-apps/networking?tabs=workload-profiles-env%2Cazure-cli).
+* Using [certificates](https://learn.microsoft.com/entra/identity/authentication/how-to-certificate-based-authentication) instead of client secrets for the Microsoft Entra application.
 
-For example, to point at a local llamafile server running on its default port:
+## Resources
 
-```shell
-LOCAL_OPENAI_ENDPOINT="http://localhost:8080/v1"
-```
-
-If you're running inside a dev container, use this local URL instead:
-
-```shell
-LOCAL_OPENAI_ENDPOINT="http://host.docker.internal:8080/v1"
-```
-
-## Local development with Docker
-
-In addition to the `Dockerfile` that's used in production, this repo includes a `docker-compose.yaml` for
-local development which creates a volume for the app code. That allows you to make changes to the code
-and see them instantly.
-
-1. Install [Docker Desktop](https://www.docker.com/products/docker-desktop/). If you opened this inside Github Codespaces or a Dev Container in VS Code, installation is not needed. ⚠️ If you're on an Apple M1/M2, you won't be able to run `docker` commands inside a Dev Container; either use Codespaces or do not open the Dev Container.
-
-2. Make sure that the `.env` file exists. The `azd up` deployment step should have created it.
-
-3. Store a key for the OpenAI resource in the `.env` file. You can get the key from the Azure Portal, or from the output of `./infra/getkey.sh`. The key should be stored in the `.env` file as `AZURE_OPENAI_KEY`. This is necessary because Docker containers don't have access to your user Azure credentials.
-
-4. Start the services with this command:
-
-    ```shell
-    docker-compose up --build
-    ```
-
-5. Click 'http://0.0.0.0:50505' in the terminal, which should open a new tab in the browser. You may need to navigate to 'http://localhost:50505' if that URL doesn't work.
-
-## Getting help
-
-If you're working with this project and running into issues, please post in **Discussions**.
+* [OpenAI Chat App with Managed Identity](https://github.com/Azure-Samples/openai-chat-app-quickstart): Similar to this project, but doesn't include Microsoft Entra authentication.
+* [RAG chat with Azure AI Search + Python](https://github.com/Azure-Samples/azure-search-openai-demo/): A more advanced chat app that uses Azure AI Search to ground responses in domain knowledge.
+* [Develop Python apps that use Azure AI services](https://learn.microsoft.com/azure/developer/python/azure-ai-for-python-developers)
