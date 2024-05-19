@@ -12,7 +12,6 @@ products:
 - azure-openai
 - azure-container-registry
 - entra-id
-- msal
 page_type: sample
 urlFragment: openai-chat-app-entra-auth-local
 ---
