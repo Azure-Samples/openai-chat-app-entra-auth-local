@@ -5,7 +5,7 @@ param clientSecretName string
 @secure()
 param clientSecretValue string
 
-module searchServiceKVSecret 'core/security/keyvault-secret.bicep' = {
+module clientSecretKVSecret 'core/security/keyvault-secret.bicep' = {
   name: 'clientsecret'
   params: {
     keyVaultName: keyVaultName
