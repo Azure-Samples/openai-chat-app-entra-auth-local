@@ -173,8 +173,6 @@ module openAiRoleBackend 'core/security/role.bicep' = {
   }
 }
 
-// Currently, we only need Key Vault for storing Search service key,
-// which is only used for free tier
 module keyVault 'core/security/keyvault.bicep' = {
   name: 'keyvault'
   scope: resourceGroup
