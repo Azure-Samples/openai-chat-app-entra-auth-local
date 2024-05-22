@@ -223,6 +223,7 @@ output AZURE_AUTH_REDIRECT_URI string = '${aca.outputs.SERVICE_ACA_URI}/redirect
 output AZURE_AUTH_CLIENT_SECRET_NAME string = authClientSecretName
 output AZURE_AUTH_CLIENT_ID string = authClientId
 output AZURE_KEY_VAULT_NAME string = keyVault.outputs.name
+output AZURE_AUTH_AUTHORITY string = authAuthority
 
 output AZURE_CONTAINER_ENVIRONMENT_NAME string = containerApps.outputs.environmentName
 output AZURE_CONTAINER_REGISTRY_ENDPOINT string = containerApps.outputs.registryLoginServer
