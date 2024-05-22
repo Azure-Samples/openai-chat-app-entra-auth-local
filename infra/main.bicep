@@ -12,7 +12,7 @@ param location string
 @description('Id of the user or app to assign application roles')
 param principalId string = ''
 
-@description('Flag to decide where to create OpenAI role for current user')
+@description('Flag to decide where to create RBAC roles for current user')
 param createRoleForUser bool = true
 
 param acaExists bool = false
@@ -29,6 +29,8 @@ param authClientId string = ''
 @secure()
 param authClientSecret string = ''
 param authClientSecretName string = 'AZURE-AUTH-CLIENT-SECRET'
+
+param runningOnGh bool = false
 
 var resourceToken = toLower(uniqueString(subscription().id, name, location))
 var tags = { 'azd-env-name': name }
@@ -104,7 +106,7 @@ module redisAccessBackend 'core/cache/redis-access.bicep' = {
   }
 }
 
-module redisBackendUser 'core/cache/redis-access.bicep' = {
+module redisBackendUser 'core/cache/redis-access.bicep' = if (createRoleForUser) {
   name: 'redis-access-for-user'
   scope: resourceGroup
   params: {
@@ -152,8 +154,7 @@ module aca 'aca.bicep' = {
   }
 }
 
-module openAiRoleUser 'core/security/role.bicep' =
-  if (createRoleForUser) {
+module openAiRoleUser 'core/security/role.bicep' = if (createRoleForUser) {
     scope: openAiResourceGroup
     name: 'openai-role-user'
     params: {
@@ -179,11 +180,11 @@ module keyVault 'core/security/keyvault.bicep' = {
   params: {
     name: '${replace(take(prefix, 17), '-', '')}-vault'
     location: location
-    principalId: principalId
+    principalId: runningOnGh ? '' : principalId
   }
 }
 
-module userKVAccess 'core/security/keyvault-access.bicep' = {
+module userKVAccess 'core/security/keyvault-access.bicep' = if (!runningOnGh) {
   name: 'user-keyvault-access'
   scope: resourceGroup
   params: {
