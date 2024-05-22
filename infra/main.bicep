@@ -30,6 +30,8 @@ param authClientId string = ''
 param authClientSecret string = ''
 param authClientSecretName string = 'AZURE-AUTH-CLIENT-SECRET'
 
+param runningOnGh bool = false
+
 var resourceToken = toLower(uniqueString(subscription().id, name, location))
 var tags = { 'azd-env-name': name }
 
@@ -104,7 +106,7 @@ module redisAccessBackend 'core/cache/redis-access.bicep' = {
   }
 }
 
-module redisBackendUser 'core/cache/redis-access.bicep' = {
+module redisBackendUser 'core/cache/redis-access.bicep' = if (!runningOnGh) {
   name: 'redis-access-for-user'
   scope: resourceGroup
   params: {
@@ -152,7 +154,7 @@ module aca 'aca.bicep' = {
   }
 }
 
-module openAiRoleUser 'core/security/role.bicep' =
+module openAiRoleUser 'core/security/role.bicep' = if (!runningOnGh) {
   if (createRoleForUser) {
     scope: openAiResourceGroup
     name: 'openai-role-user'
@@ -179,11 +181,11 @@ module keyVault 'core/security/keyvault.bicep' = {
   params: {
     name: '${replace(take(prefix, 17), '-', '')}-vault'
     location: location
-    principalId: principalId
+    principalId: runningOnGh ? '' : principalId
   }
 }
 
-module userKVAccess 'core/security/keyvault-access.bicep' = {
+module userKVAccess 'core/security/keyvault-access.bicep' = if (!runningOnGh) {
   name: 'user-keyvault-access'
   scope: resourceGroup
   params: {
