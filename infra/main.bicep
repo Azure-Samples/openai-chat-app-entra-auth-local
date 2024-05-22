@@ -183,6 +183,15 @@ module keyVault 'core/security/keyvault.bicep' = {
   }
 }
 
+module userKVAccess 'core/security/keyvault-access.bicep' = {
+  name: 'user-keyvault-access'
+  scope: resourceGroup
+  params: {
+    keyVaultName: keyVault.outputs.name
+    principalId: principalId
+  }
+}
+
 module webKVAccess 'core/security/keyvault-access.bicep' = {
   name: 'web-keyvault-access'
   scope: resourceGroup
