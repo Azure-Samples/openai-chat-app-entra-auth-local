@@ -12,7 +12,7 @@ param location string
 @description('Id of the user or app to assign application roles')
 param principalId string = ''
 
-@description('Flag to decide where to create OpenAI role for current user')
+@description('Flag to decide where to create RBAC roles for current user')
 param createRoleForUser bool = true
 
 param acaExists bool = false
@@ -106,7 +106,7 @@ module redisAccessBackend 'core/cache/redis-access.bicep' = {
   }
 }
 
-module redisBackendUser 'core/cache/redis-access.bicep' = if (!runningOnGh) {
+module redisBackendUser 'core/cache/redis-access.bicep' = if (createRoleForUser) {
   name: 'redis-access-for-user'
   scope: resourceGroup
   params: {
@@ -154,8 +154,7 @@ module aca 'aca.bicep' = {
   }
 }
 
-module openAiRoleUser 'core/security/role.bicep' = if (!runningOnGh) {
-  if (createRoleForUser) {
+module openAiRoleUser 'core/security/role.bicep' = if (createRoleForUser) {
     scope: openAiResourceGroup
     name: 'openai-role-user'
     params: {
