@@ -13,16 +13,20 @@ param diagnosticMetricsToEnable array = [
   'AllMetrics'
 ]
 
-var diagnosticsLogs = [{ 
-  categoryGroup: 'allLogs'
-  enabled: true
- }]
+var diagnosticsLogs = [
+  {
+    categoryGroup: 'allLogs'
+    enabled: true
+  }
+]
 
-var diagnosticsMetrics = [for metric in diagnosticMetricsToEnable: {
-  category: metric
-  timeGrain: null
-  enabled: true
-}]
+var diagnosticsMetrics = [
+  for metric in diagnosticMetricsToEnable: {
+    category: metric
+    timeGrain: null
+    enabled: true
+  }
+]
 
 resource redisCache 'Microsoft.Cache/Redis@2023-08-01' existing = {
   name: cacheName
@@ -32,7 +36,7 @@ resource cache_diagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05
   name: '${cacheName}-diagnostics'
   scope: redisCache
   properties: {
-    workspaceId:  diagnosticWorkspaceId
+    workspaceId: diagnosticWorkspaceId
     metrics: diagnosticsMetrics
     logs: diagnosticsLogs
   }
