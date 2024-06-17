@@ -41,10 +41,9 @@ resource resourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   tags: tags
 }
 
-resource openAiResourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' existing =
-  if (!empty(openAiResourceGroupName)) {
-    name: !empty(openAiResourceGroupName) ? openAiResourceGroupName : resourceGroup.name
-  }
+resource openAiResourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' existing = if (!empty(openAiResourceGroupName)) {
+  name: !empty(openAiResourceGroupName) ? openAiResourceGroupName : resourceGroup.name
+}
 
 var prefix = '${name}-${resourceToken}'
 
@@ -116,6 +115,15 @@ module redisBackendUser 'core/cache/redis-access.bicep' = if (createRoleForUser)
   }
 }
 
+module redisDiagnostics 'core/cache/redis-diagnostics.bicep' = {
+  name: 'redis-diagnostics'
+  scope: resourceGroup
+  params: {
+    cacheName: redisCache.outputs.name
+    diagnosticWorkspaceId: logAnalyticsWorkspace.outputs.id
+  }
+}
+
 // Container apps host (including container registry)
 module containerApps 'core/host/container-apps.bicep' = {
   name: 'container-apps'
@@ -155,14 +163,14 @@ module aca 'aca.bicep' = {
 }
 
 module openAiRoleUser 'core/security/role.bicep' = if (createRoleForUser) {
-    scope: openAiResourceGroup
-    name: 'openai-role-user'
-    params: {
-      principalId: principalId
-      roleDefinitionId: '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
-      principalType: 'User'
-    }
+  scope: openAiResourceGroup
+  name: 'openai-role-user'
+  params: {
+    principalId: principalId
+    roleDefinitionId: '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
+    principalType: 'User'
   }
+}
 
 module openAiRoleBackend 'core/security/role.bicep' = {
   scope: openAiResourceGroup
@@ -202,16 +210,15 @@ module webKVAccess 'core/security/keyvault-access.bicep' = {
   }
 }
 
-module secrets 'secrets.bicep' =
-  if (!empty(authClientSecret)) {
-    name: 'secrets'
-    scope: resourceGroup
-    params: {
-      keyVaultName: keyVault.outputs.name
-      clientSecretName: authClientSecretName
-      clientSecretValue: authClientSecret
-    }
+module secrets 'secrets.bicep' = if (!empty(authClientSecret)) {
+  name: 'secrets'
+  scope: resourceGroup
+  params: {
+    keyVaultName: keyVault.outputs.name
+    clientSecretName: authClientSecretName
+    clientSecretValue: authClientSecret
   }
+}
 
 output AZURE_LOCATION string = location
 
