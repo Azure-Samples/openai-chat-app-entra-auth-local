@@ -116,6 +116,15 @@ module redisBackendUser 'core/cache/redis-access.bicep' = if (createRoleForUser)
   }
 }
 
+module redisDiagnostics 'core/cache/redis-diagnostics.bicep' = {
+  name: 'redis-diagnostics'
+  scope: resourceGroup
+  params: {
+    cacheName: redisCache.outputs.name
+    diagnosticWorkspaceId: logAnalyticsWorkspace.outputs.id
+  }
+}
+
 // Container apps host (including container registry)
 module containerApps 'core/host/container-apps.bicep' = {
   name: 'container-apps'
