@@ -188,25 +188,26 @@ module keyVault 'core/security/keyvault.bicep' = {
   params: {
     name: '${replace(take(prefix, 17), '-', '')}-vault'
     location: location
-    principalId: runningOnGh ? '' : principalId
   }
 }
 
-module userKVAccess 'core/security/keyvault-access.bicep' = if (!runningOnGh) {
+module userKeyVaultAccess 'core/security/role.bicep' = {
   name: 'user-keyvault-access'
   scope: resourceGroup
   params: {
-    keyVaultName: keyVault.outputs.name
     principalId: principalId
+    principalType: runningOnGh ? 'ServicePrincipal' : 'User'
+    roleDefinitionId: '00482a5a-887f-4fb3-b363-3b7fe8e74483'
   }
 }
 
-module webKVAccess 'core/security/keyvault-access.bicep' = {
+module webKeyVaultAccess 'core/security/role.bicep' = {
   name: 'web-keyvault-access'
   scope: resourceGroup
   params: {
-    keyVaultName: keyVault.outputs.name
-    principalId: aca.outputs.SERVICE_ACA_IDENTITY_PRINCIPAL_ID
+    principalId:  aca.outputs.SERVICE_ACA_IDENTITY_PRINCIPAL_ID
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: '00482a5a-887f-4fb3-b363-3b7fe8e74483'
   }
 }
 
