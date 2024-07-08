@@ -6,7 +6,7 @@ from functools import wraps
 import azure.identity.aio
 import openai
 import redis.asyncio as redis
-from azure.keyvault.secrets.aio import SecretClient
+from azure.keyvault.secrets import SecretClient
 from identity.quart import Auth
 from quart import (
     Blueprint,
@@ -17,8 +17,9 @@ from quart import (
     stream_with_context,
 )
 
-bp = Blueprint("chat", __name__, template_folder="templates", static_folder="static")
+from .auth import auth
 
+bp = Blueprint("chat", __name__, template_folder="templates", static_folder="static")
 
 def get_azure_credential():
     if not hasattr(bp, "azure_credential"):
@@ -27,7 +28,7 @@ def get_azure_credential():
 
 
 @bp.before_app_serving
-async def configure_openai():
+async def configure_clients():
     client_args = {}
     if os.getenv("LOCAL_OPENAI_ENDPOINT"):
         # Use a local endpoint like llamafile server
@@ -63,31 +64,10 @@ async def configure_openai():
             azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
             **client_args,
         )
-    redirect_uri = "http://localhost:50505/redirect"
-    if os.getenv("RUNNING_IN_PRODUCTION"):
-        redirect_uri = (
-            f"https://{os.environ['CONTAINER_APP_NAME']}.{os.environ['CONTAINER_APP_ENV_DNS_SUFFIX']}/redirect"
-        )
-        current_app.logger.warn(f"Using production redirect URI: {redirect_uri}")
-
-    AZURE_AUTH_CLIENT_SECRET_NAME = os.getenv("AZURE_AUTH_CLIENT_SECRET_NAME")
-    AZURE_KEY_VAULT_NAME = os.getenv("AZURE_KEY_VAULT_NAME")
-    async with SecretClient(
-        vault_url=f"https://{AZURE_KEY_VAULT_NAME}.vault.azure.net", credential=get_azure_credential()
-    ) as key_vault_client:
-        auth_client_secret = (await key_vault_client.get_secret(AZURE_AUTH_CLIENT_SECRET_NAME)).value
 
     bp.cache = await setup_redis()
     current_app.config["SESSION_TYPE"] = "redis"
     current_app.config["SESSION_REDIS"] = bp.cache
-
-    bp.auth = Auth(
-        current_app,
-        authority=os.getenv("AZURE_AUTH_AUTHORITY"),
-        client_id=os.getenv("AZURE_AUTH_CLIENT_ID"),
-        client_credential=auth_client_secret,
-        redirect_uri=redirect_uri,
-    )
 
 
 async def setup_redis():
@@ -149,13 +129,13 @@ async def shutdown_openai():
 
 
 @bp.get("/")
-@login_required
+@auth.login_required
 async def index(*, context):
     return await render_template("index.html", user=context["user"]["name"])
 
 
 @bp.post("/chat/stream")
-@login_required
+@auth.login_required
 async def chat_handler(*, context):
     request_messages = (await request.get_json())["messages"]
 
