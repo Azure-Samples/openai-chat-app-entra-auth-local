@@ -2,8 +2,6 @@ import pytest
 
 import quartapp
 
-from . import mock_cred
-
 
 @pytest.mark.asyncio
 async def test_index(client):

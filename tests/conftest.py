@@ -130,7 +130,6 @@ def mock_defaultazurecredential(monkeypatch):
     monkeypatch.setattr("azure.identity.aio.DefaultAzureCredential", mock_cred.MockAsyncAzureCredential)
 
 
-
 @pytest.fixture
 def mock_keyvault_secretclient(monkeypatch):
     monkeypatch.setenv("AZURE_KEY_VAULT_NAME", "my_key_vault")
