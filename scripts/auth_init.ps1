@@ -3,8 +3,6 @@ if ($env:GITHUB_ACTIONS) {
   exit 0
 }
 
-. ./scripts/load_env.ps1
-
 $pythonCmd = Get-Command python -ErrorAction SilentlyContinue
 if (-not $pythonCmd) {
   # fallback to python3 if python not found

@@ -5,6 +5,4 @@ if [ -n "$GITHUB_ACTIONS" ]; then
   exit 0
 fi
 
-. ./scripts/load_env.sh
-
 python ./scripts/auth_init.py
