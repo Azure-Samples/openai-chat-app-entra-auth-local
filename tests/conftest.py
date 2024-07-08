@@ -4,7 +4,7 @@ import identity.quart
 import openai
 import pytest
 import pytest_asyncio
-from azure.keyvault.secrets.aio import SecretClient
+from azure.keyvault.secrets import SecretClient
 
 import quartapp
 
@@ -126,8 +126,8 @@ def mock_openai_chatcompletion(monkeypatch):
 
 @pytest.fixture
 def mock_defaultazurecredential(monkeypatch):
-    monkeypatch.setattr("azure.identity.aio.DefaultAzureCredential", mock_cred.MockAzureCredential)
-    monkeypatch.setattr("azure.identity.aio.ManagedIdentityCredential", mock_cred.MockAzureCredential)
+    monkeypatch.setattr("azure.identity.DefaultAzureCredential", mock_cred.MockAzureCredential)
+    monkeypatch.setattr("azure.identity.aio.DefaultAzureCredential", mock_cred.MockAsyncAzureCredential)
 
 
 @pytest.fixture
@@ -135,7 +135,7 @@ def mock_keyvault_secretclient(monkeypatch):
     monkeypatch.setenv("AZURE_KEY_VAULT_NAME", "my_key_vault")
     monkeypatch.setenv("AZURE_AUTH_CLIENT_SECRET_NAME", "my_secret_name")
 
-    async def get_secret(*args, **kwargs):
+    def get_secret(*args, **kwargs):
         if args[1] == "my_secret_name":
             return mock_cred.MockKeyVaultSecret("mysecret")
         raise Exception(f"Unexpected secret name: {args[1]}")

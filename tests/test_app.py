@@ -2,8 +2,6 @@ import pytest
 
 import quartapp
 
-from . import mock_cred
-
 
 @pytest.mark.asyncio
 async def test_index(client):
@@ -64,8 +62,6 @@ async def test_openai_managedidentity(monkeypatch, mock_keyvault_secretclient):
     monkeypatch.setenv("AZURE_OPENAI_ENDPOINT", "test-openai-service.openai.azure.com")
     monkeypatch.setenv("AZURE_OPENAI_CHATGPT_DEPLOYMENT", "test-chatgpt")
     monkeypatch.setenv("AZURE_OPENAI_VERSION", "2023-10-01-preview")
-
-    monkeypatch.setattr("azure.identity.aio.ManagedIdentityCredential", mock_cred.MockAzureCredential)
 
     quart_app = quartapp.create_app()
 
