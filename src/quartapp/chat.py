@@ -6,8 +6,6 @@ from functools import wraps
 import azure.identity.aio
 import openai
 import redis.asyncio as redis
-from azure.keyvault.secrets import SecretClient
-from identity.quart import Auth
 from quart import (
     Blueprint,
     Response,
@@ -20,6 +18,7 @@ from quart import (
 from .auth import auth
 
 bp = Blueprint("chat", __name__, template_folder="templates", static_folder="static")
+
 
 def get_azure_credential():
     if not hasattr(bp, "azure_credential"):
@@ -66,7 +65,6 @@ async def configure_clients():
         )
 
     bp.cache = await setup_redis()
-    current_app.config["SESSION_TYPE"] = "redis"
     current_app.config["SESSION_REDIS"] = bp.cache
 
 
@@ -95,16 +93,6 @@ async def setup_redis():
     return redis.Redis(
         host=host, ssl=ssl, port=port, username=bp.redis_username, password=password, decode_responses=True
     )
-
-
-def login_required(f):
-    """Decorator to require login for a route."""
-
-    @wraps(f)
-    async def decorated_function(*args, **kwargs):
-        return await bp.auth.login_required(f)(*args, **kwargs)
-
-    return decorated_function
 
 
 @bp.before_request
