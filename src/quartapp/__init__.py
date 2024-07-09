@@ -1,6 +1,7 @@
 import logging
 import os
 
+from dotenv import load_dotenv
 from quart import Quart
 
 
@@ -9,16 +10,10 @@ def create_app():
         logging.basicConfig(level=logging.WARNING)
     else:
         logging.basicConfig(level=logging.INFO)
+        load_dotenv(verbose=True, override=True)
 
     app = Quart(__name__)
     app.logger.setLevel(logging.INFO)
-
-    from .auth import auth
-
-    # Declare the session type first, for the Auth extension to work with Quart-Session properly:
-    app.config["SESSION_TYPE"] = "redis"
-    # Initialize the Auth extension with the Quart app instance:
-    auth.init_app(app)
 
     from . import chat  # noqa
 

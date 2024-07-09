@@ -12,7 +12,7 @@ def get_redirect_uri():
         redirect_uri = (
             f"https://{os.environ['CONTAINER_APP_NAME']}.{os.environ['CONTAINER_APP_ENV_DNS_SUFFIX']}/redirect"
         )
-        logging.warn(f"Using production redirect URI: {redirect_uri}")
+        logging.info(f"Using production redirect URI: {redirect_uri}")
     return redirect_uri
 
 
