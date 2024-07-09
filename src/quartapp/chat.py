@@ -1,10 +1,13 @@
 import json
 import os
 import time
+from functools import wraps
 
 import azure.identity.aio
 import openai
 import redis.asyncio as redis
+from azure.keyvault.secrets.aio import SecretClient
+from identity.quart import Auth
 from quart import (
     Blueprint,
     Response,
@@ -14,8 +17,6 @@ from quart import (
     stream_with_context,
 )
 
-from .auth import auth
-
 bp = Blueprint("chat", __name__, template_folder="templates", static_folder="static")
 
 
@@ -23,6 +24,31 @@ def get_azure_credential():
     if not hasattr(bp, "azure_credential"):
         bp.azure_credential = azure.identity.aio.DefaultAzureCredential(exclude_shared_token_cache_credential=True)
     return bp.azure_credential
+
+
+async def setup_redis():
+    azure_scope = "https://redis.azure.com/.default"
+    use_azure_redis = os.getenv("RUNNING_IN_PRODUCTION") is not None
+    if use_azure_redis:
+        host = os.getenv("AZURE_REDIS_HOST")
+        bp.redis_username = os.getenv("AZURE_REDIS_USER")
+        port = 6380
+        ssl = True
+    else:
+        host = "localhost"
+        port = 6379
+        bp.redis_username = None
+        password = None
+        ssl = False
+    if use_azure_redis:
+        current_app.logger.info("Using Azure Redis with default credential")
+        bp.redis_token = await get_azure_credential().get_token(azure_scope)
+        password = bp.redis_token.token
+    else:
+        current_app.logger.info("Using Redis with username and password")
+    return redis.Redis(
+        host=host, ssl=ssl, port=port, username=bp.redis_username, password=password, decode_responses=True
+    )
 
 
 @bp.before_app_serving
@@ -64,34 +90,40 @@ async def configure_clients():
         )
 
     bp.cache = await setup_redis()
+    current_app.config["SESSION_TYPE"] = "redis"
     current_app.config["SESSION_REDIS"] = bp.cache
 
+    redirect_uri = "http://localhost:50505/redirect"
+    if os.getenv("RUNNING_IN_PRODUCTION"):
+        redirect_uri = (
+            f"https://{os.environ['CONTAINER_APP_NAME']}.{os.environ['CONTAINER_APP_ENV_DNS_SUFFIX']}/redirect"
+        )
+        current_app.logger.warn(f"Using production redirect URI: {redirect_uri}")
 
-async def setup_redis():
-    azure_scope = "https://redis.azure.com/.default"
-    use_azure_redis = os.getenv("RUNNING_IN_PRODUCTION") is not None
-    if use_azure_redis:
-        host = os.getenv("AZURE_REDIS_HOST")
-        bp.redis_username = os.getenv("AZURE_REDIS_USER")
-        port = 6380
-        ssl = True
-    else:
-        host = "localhost"
-        port = 6379
-        bp.redis_username = None
-        password = None
-        ssl = False
+    AZURE_AUTH_CLIENT_SECRET_NAME = os.getenv("AZURE_AUTH_CLIENT_SECRET_NAME")
+    AZURE_KEY_VAULT_NAME = os.getenv("AZURE_KEY_VAULT_NAME")
+    async with SecretClient(
+        vault_url=f"https://{AZURE_KEY_VAULT_NAME}.vault.azure.net", credential=get_azure_credential()
+    ) as key_vault_client:
+        auth_client_secret = (await key_vault_client.get_secret(AZURE_AUTH_CLIENT_SECRET_NAME)).value
 
-    if use_azure_redis:
-        current_app.logger.info("Using Azure Redis with default credential")
-        bp.redis_token = await get_azure_credential().get_token(azure_scope)
-        password = bp.redis_token.token
-    else:
-        current_app.logger.info("Using Redis with username and password")
-
-    return redis.Redis(
-        host=host, ssl=ssl, port=port, username=bp.redis_username, password=password, decode_responses=True
+    bp.auth = Auth(
+        current_app,
+        authority=os.getenv("AZURE_AUTH_AUTHORITY"),
+        client_id=os.getenv("AZURE_AUTH_CLIENT_ID"),
+        client_credential=auth_client_secret,
+        redirect_uri=redirect_uri,
     )
+
+
+def login_required(f):
+    """Decorator to require login for a route."""
+
+    @wraps(f)
+    async def decorated_function(*args, **kwargs):
+        return await bp.auth.login_required(f)(*args, **kwargs)
+
+    return decorated_function
 
 
 @bp.before_request
@@ -116,13 +148,13 @@ async def shutdown_openai():
 
 
 @bp.get("/")
-@auth.login_required
+@login_required
 async def index(*, context):
     return await render_template("index.html", user=context["user"]["name"])
 
 
 @bp.post("/chat/stream")
-@auth.login_required
+@login_required
 async def chat_handler(*, context):
     request_messages = (await request.get_json())["messages"]
 
