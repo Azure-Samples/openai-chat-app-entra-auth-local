@@ -12,7 +12,7 @@ dependencies = [
     "aiohttp",
     "python-dotenv",
     "pyyaml",
-    "redis",
+    "redis[hiredis]",
     "azure-keyvault-secrets",
     "identity[quart]"
     ]
