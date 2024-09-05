@@ -14,12 +14,12 @@
     {% else %}
     <p>
        To use this application, you must
-        <a href="{{ auth_uri }}"">sign in.</a></p>
+        <a href="{{ auth_uri }}">sign in.</a></p>
     {% endif %}
 
     {% if reset_password_url %}
     <hr>
-    <p><a href='{{ reset_password_url }}'>Reset password</a></p>
+    <p><a href="{{ reset_password_url }}">Reset password</a></p>
     {% endif %}
 </div>
 
