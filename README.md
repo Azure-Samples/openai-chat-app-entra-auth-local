@@ -161,6 +161,12 @@ azd pipeline config
 
 Assuming you've run the steps in [Opening the project](#opening-the-project) and have run `azd up`, you can now run the Quart app locally using the development server:
 
+1. Create a `.env` file in the root of the project by running:
+
+    ```shell
+   sh scripts/make_dotenv.sh > .env
+    ```
+
 ```shell
 python -m quart --app src.quartapp run --port 50505 --reload
 ```

@@ -1,4 +1,3 @@
-import json
 import logging
 import subprocess
 
@@ -9,14 +8,14 @@ logger = logging.getLogger("authsetup")
 
 def load_azd_env():
     """Get path to current azd env file and load file using python-dotenv"""
-    result = subprocess.run("azd env list -o json", shell=True, capture_output=True, text=True)
+    result = subprocess.run(
+        'azd env list --query "[?IsDefaultt].DotEnvPath | [0]" -o json', shell=True, stdout=subprocess.PIPE, text=True
+    )
     if result.returncode != 0:
         raise Exception("Error loading azd env")
-    env_json = json.loads(result.stdout)
-    env_file_path = None
-    for entry in env_json:
-        if entry["IsDefault"]:
-            env_file_path = entry["DotEnvPath"]
+    env_file_path = result.stdout
+    print(f"path:{env_file_path}:")
+    print(len(env_file_path))
     if not env_file_path:
         raise Exception("No default azd env file found")
     logger.info(f"Loading azd env from {env_file_path}")
