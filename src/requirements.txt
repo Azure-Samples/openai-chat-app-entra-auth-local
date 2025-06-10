@@ -155,7 +155,7 @@ quart-session==3.0.0
     # via identity
 redis[hiredis]==5.0.7
     # via quartapp (pyproject.toml)
-requests==2.32.3
+requests==2.32.4
     # via
     #   azure-core
     #   identity
