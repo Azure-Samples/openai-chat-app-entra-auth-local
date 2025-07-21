@@ -74,11 +74,11 @@ hiredis==2.3.2
     # via redis
 hpack==4.0.0
     # via h2
-httpcore==1.0.8
+httpcore==1.0.10
     # via httpx
 httptools==0.6.1
     # via uvicorn
-httpx==0.28.1
+httpx==0.29.0
     # via openai
 hypercorn==0.17.3
     # via quart
