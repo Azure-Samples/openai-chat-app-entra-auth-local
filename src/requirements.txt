@@ -68,7 +68,7 @@ h11==0.16.0
     #   hypercorn
     #   uvicorn
     #   wsproto
-h2==4.1.0
+h2==4.3.0
     # via hypercorn
 hiredis==2.3.2
     # via redis
