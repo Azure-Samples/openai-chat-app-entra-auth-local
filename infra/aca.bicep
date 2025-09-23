@@ -9,7 +9,6 @@ param serviceName string = 'aca'
 param exists bool
 param openAiDeploymentName string
 param openAiEndpoint string
-param openAiApiVersion string
 param keyVaultName string
 param authClientSecretName string
 param authClientId string
@@ -39,10 +38,6 @@ module app 'core/host/container-app-upsert.bicep' = {
       {
         name: 'AZURE_OPENAI_ENDPOINT'
         value: openAiEndpoint
-      }
-      {
-        name: 'AZURE_OPENAI_API_VERSION'
-        value: openAiApiVersion
       }
       {
         name: 'RUNNING_IN_PRODUCTION'
