@@ -83,7 +83,7 @@ async def configure_clients():
             raise ValueError("AZURE_OPENAI_ENDPOINT is required for Azure OpenAI")
         if not os.getenv("AZURE_OPENAI_CHATGPT_DEPLOYMENT"):
             raise ValueError("AZURE_OPENAI_CHATGPT_DEPLOYMENT is required for Azure OpenAI")
-        client_args["base_url"] = os.getenv("AZURE_OPENAI_ENDPOINT")
+        client_args["base_url"] = os.getenv("AZURE_OPENAI_ENDPOINT") + "/openai/v1"
         bp.openai_client = openai.AsyncOpenAI(
             **client_args,
         )

@@ -52,7 +52,7 @@ async def test_openai_key(monkeypatch, mock_keyvault_secretclient):
 
     async with quart_app.test_app():
         assert quart_app.blueprints["chat"].openai_client.api_key == "test-key"
-        assert str(quart_app.blueprints["chat"].openai_client.base_url).rstrip('/') == "test-openai-service.openai.azure.com"
+        assert str(quart_app.blueprints["chat"].openai_client.base_url).rstrip('/') == "test-openai-service.openai.azure.com/openai/v1"
 
 
 @pytest.mark.asyncio
@@ -66,7 +66,7 @@ async def test_openai_managedidentity(monkeypatch, mock_keyvault_secretclient):
     async with quart_app.test_app():
         # For managed identity, the api_key will be the token provider function
         assert quart_app.blueprints["chat"].openai_client.api_key is not None
-        assert str(quart_app.blueprints["chat"].openai_client.base_url).rstrip('/') == "test-openai-service.openai.azure.com"
+        assert str(quart_app.blueprints["chat"].openai_client.base_url).rstrip('/') == "test-openai-service.openai.azure.com/openai/v1"
 
 
 @pytest.mark.asyncio
