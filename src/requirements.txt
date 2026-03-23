@@ -8,7 +8,7 @@ aiofiles==24.1.0
     # via quart
 aiohappyeyeballs==2.6.1
     # via aiohttp
-aiohttp==3.12.14
+aiohttp==3.13.3
     # via quartapp (pyproject.toml)
 aiosignal==1.4.0
     # via aiohttp
@@ -21,7 +21,7 @@ anyio==4.4.0
     #   watchfiles
 attrs==24.3.0
     # via aiohttp
-azure-core==1.30.2
+azure-core==1.38.0
     # via
     #   azure-identity
     #   azure-keyvault-secrets
@@ -182,7 +182,7 @@ typing-extensions==4.12.2
     #   openai
     #   pydantic
     #   pydantic-core
-urllib3==2.5.0
+urllib3==2.6.3
     # via requests
 uvicorn[standard]==0.30.1
     # via quartapp (pyproject.toml)
@@ -192,7 +192,7 @@ watchfiles==0.22.0
     # via uvicorn
 websockets==12.0
     # via uvicorn
-werkzeug==3.0.6
+werkzeug==3.1.5
     # via
     #   flask
     #   quart
