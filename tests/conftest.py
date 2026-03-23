@@ -11,7 +11,7 @@ from . import mock_cred
 
 
 @pytest.fixture
-def mock_openai_chatcompletion(monkeypatch):
+def mock_openai_responses(monkeypatch):
     class MockResponseEvent:
         def __init__(self, event_type, delta=None):
             self.type = event_type
@@ -90,7 +90,7 @@ def mock_login_required(monkeypatch):
 @pytest_asyncio.fixture
 async def client(
     monkeypatch,
-    mock_openai_chatcompletion,
+    mock_openai_responses,
     mock_defaultazurecredential,
     mock_keyvault_secretclient,
     mock_login_required,
