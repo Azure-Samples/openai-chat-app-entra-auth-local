@@ -131,6 +131,7 @@ def mock_defaultazurecredential(monkeypatch):
 
 @pytest.fixture
 def mock_keyvault_secretclient(monkeypatch):
+    monkeypatch.setattr("quartapp.load_dotenv", lambda *args, **kwargs: None)
     monkeypatch.setenv("AZURE_KEY_VAULT_NAME", "my_key_vault")
     monkeypatch.setenv("AZURE_AUTH_CLIENT_SECRET_NAME", "my_secret_name")
 

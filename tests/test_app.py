@@ -47,13 +47,13 @@ async def test_openai_key(monkeypatch, mock_keyvault_secretclient):
     monkeypatch.setenv("AZURE_OPENAI_KEY", "test-key")
     monkeypatch.setenv("AZURE_OPENAI_ENDPOINT", "test-openai-service.openai.azure.com")
     monkeypatch.setenv("AZURE_OPENAI_CHATGPT_DEPLOYMENT", "test-chatgpt")
-    monkeypatch.setenv("AZURE_OPENAI_VERSION", "2023-10-01-preview")
 
     quart_app = quartapp.create_app()
 
     async with quart_app.test_app():
         assert quart_app.blueprints["chat"].openai_client.api_key == "test-key"
-        assert quart_app.blueprints["chat"].openai_client._azure_ad_token_provider is None
+        base_url = str(quart_app.blueprints["chat"].openai_client.base_url).rstrip("/")
+        assert base_url == "test-openai-service.openai.azure.com/openai/v1"
 
 
 @pytest.mark.asyncio
@@ -61,12 +61,14 @@ async def test_openai_managedidentity(monkeypatch, mock_keyvault_secretclient):
     monkeypatch.setenv("AZURE_OPENAI_CLIENT_ID", "test-client-id")
     monkeypatch.setenv("AZURE_OPENAI_ENDPOINT", "test-openai-service.openai.azure.com")
     monkeypatch.setenv("AZURE_OPENAI_CHATGPT_DEPLOYMENT", "test-chatgpt")
-    monkeypatch.setenv("AZURE_OPENAI_VERSION", "2023-10-01-preview")
 
     quart_app = quartapp.create_app()
 
     async with quart_app.test_app():
-        assert quart_app.blueprints["chat"].openai_client._azure_ad_token_provider is not None
+        # For managed identity, the api_key will be the token provider function
+        assert quart_app.blueprints["chat"].openai_client.api_key is not None
+        base_url = str(quart_app.blueprints["chat"].openai_client.base_url).rstrip("/")
+        assert base_url == "test-openai-service.openai.azure.com/openai/v1"
 
 
 @pytest.mark.asyncio

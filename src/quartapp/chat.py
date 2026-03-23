@@ -76,16 +76,15 @@ async def configure_clients():
             # See https://docs.microsoft.com/azure/developer/python/azure-sdk-authenticate#defaultazurecredential
             # This will *not* work inside a Docker container.
             current_app.logger.info("Using Azure OpenAI with default credential")
-            client_args["azure_ad_token_provider"] = azure.identity.aio.get_bearer_token_provider(
+            client_args["api_key"] = azure.identity.aio.get_bearer_token_provider(
                 get_azure_credential(), "https://cognitiveservices.azure.com/.default"
             )
         if not os.getenv("AZURE_OPENAI_ENDPOINT"):
             raise ValueError("AZURE_OPENAI_ENDPOINT is required for Azure OpenAI")
         if not os.getenv("AZURE_OPENAI_CHATGPT_DEPLOYMENT"):
             raise ValueError("AZURE_OPENAI_CHATGPT_DEPLOYMENT is required for Azure OpenAI")
-        bp.openai_client = openai.AsyncAzureOpenAI(
-            api_version=os.getenv("AZURE_OPENAI_API_VERSION") or "2024-02-15-preview",
-            azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+        client_args["base_url"] = os.getenv("AZURE_OPENAI_ENDPOINT") + "/openai/v1"
+        bp.openai_client = openai.AsyncOpenAI(
             **client_args,
         )
 
