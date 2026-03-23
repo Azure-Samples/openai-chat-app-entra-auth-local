@@ -58,7 +58,7 @@ async def test_openai_key(monkeypatch, mock_keyvault_secretclient):
 
 @pytest.mark.asyncio
 async def test_openai_managedidentity(monkeypatch, mock_keyvault_secretclient):
-    monkeypatch.setenv("AZURE_OPENAI_CLIENT_ID", "test-client-id")
+    monkeypatch.setenv("AZURE_CLIENT_ID", "test-client-id")
     monkeypatch.setenv("AZURE_OPENAI_ENDPOINT", "test-openai-service.openai.azure.com")
     monkeypatch.setenv("AZURE_OPENAI_CHATGPT_DEPLOYMENT", "test-chatgpt")
 
