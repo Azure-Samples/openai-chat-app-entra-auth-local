@@ -6,8 +6,54 @@ targetScope = 'subscription'
 param name string
 
 @minLength(1)
-@description('Primary location for all resources')
+@description('Location for the OpenAI resource')
+// https://learn.microsoft.com/azure/ai-services/openai/concepts/models?tabs=python-secure%2Cglobal-standard%2Cstandard-chat-completions#models-by-deployment-type
+@allowed([
+  'australiaeast'
+  'brazilsouth'
+  'canadaeast'
+  'eastus'
+  'eastus2'
+  'francecentral'
+  'germanywestcentral'
+  'japaneast'
+  'koreacentral'
+  'northcentralus'
+  'norwayeast'
+  'polandcentral'
+  'southafricanorth'
+  'southcentralus'
+  'southindia'
+  'spaincentral'
+  'swedencentral'
+  'switzerlandnorth'
+  'uksouth'
+  'westeurope'
+  'westus'
+  'westus3'
+])
+@metadata({
+  azd: {
+    type: 'location'
+  }
+})
 param location string
+
+@description('Name of the GPT model to deploy')
+param gptModelName string = 'gpt-4o-mini'
+
+@description('Version of the GPT model to deploy')
+// See version availability in this table:
+// https://learn.microsoft.com/azure/ai-services/openai/concepts/models?tabs=python-secure%2Cglobal-standard%2Cstandard-chat-completions#models-by-deployment-type
+param gptModelVersion string = '2024-07-18'
+
+@description('Name of the model deployment (can be different from the model name)')
+param gptDeploymentName string = 'gpt-4o-mini'
+
+@description('Capacity of the GPT deployment')
+// You can increase this, but capacity is limited per model/region, so you will get errors if you go over
+// https://learn.microsoft.com/en-us/azure/ai-services/openai/quotas-limits
+param gptDeploymentCapacity int = 30
 
 @description('Id of the user or app to assign application roles')
 param principalId string = ''
@@ -17,11 +63,7 @@ param createRoleForUser bool = true
 
 param acaExists bool = false
 
-param openAiResourceName string = ''
 param openAiResourceGroupName string = ''
-param openAiResourceGroupLocation string = ''
-param openAiSkuName string = ''
-param openAiDeploymentCapacity int = 30
 
 param authTenantId string
 param authClientId string = ''
@@ -46,31 +88,42 @@ resource openAiResourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' exi
 
 var prefix = '${name}-${resourceToken}'
 
-var openAiDeploymentName = 'chatgpt'
-module openAi 'core/ai/cognitiveservices.bicep' = {
+var openAiServiceName = '${prefix}-openai'
+module openAi 'br/public:avm/res/cognitive-services/account:0.7.1' = {
   name: 'openai'
-  scope: openAiResourceGroup
+  scope: resourceGroup
   params: {
-    name: !empty(openAiResourceName) ? openAiResourceName : '${resourceToken}-cog'
-    location: !empty(openAiResourceGroupLocation) ? openAiResourceGroupLocation : location
+    name: openAiServiceName
+    location: location
     tags: tags
-    sku: {
-      name: !empty(openAiSkuName) ? openAiSkuName : 'S0'
+    kind: 'OpenAI'
+    sku: 'S0'
+    customSubDomainName: openAiServiceName
+    networkAcls: {
+      defaultAction: 'Allow'
+      bypass: 'AzureServices'
     }
     deployments: [
       {
-        name: openAiDeploymentName
+        name: gptDeploymentName
         model: {
           format: 'OpenAI'
-          name: 'gpt-35-turbo'
-          version: '0613'
+          name: gptModelName
+          version: gptModelVersion
         }
         sku: {
-          name: 'Standard'
-          capacity: openAiDeploymentCapacity
+          name: 'GlobalStandard'
+          capacity: gptDeploymentCapacity
         }
       }
     ]
+    roleAssignments: createRoleForUser ? [
+      {
+        principalId: principalId
+        roleDefinitionIdOrName: 'Cognitive Services OpenAI User'
+        principalType: 'User'
+      }
+    ] : []
   }
 }
 
@@ -149,7 +202,7 @@ module aca 'aca.bicep' = {
     identityName: '${prefix}-id-aca'
     containerAppsEnvironmentName: containerApps.outputs.environmentName
     containerRegistryName: containerApps.outputs.registryName
-    openAiDeploymentName: openAiDeploymentName
+    openAiDeploymentName: gptDeploymentName
     openAiEndpoint: openAi.outputs.endpoint
     keyVaultName: keyVault.outputs.name
     authClientId: authClientId
@@ -221,11 +274,10 @@ module secrets 'secrets.bicep' = if (!empty(authClientSecret)) {
 
 output AZURE_LOCATION string = location
 
-output AZURE_OPENAI_CHATGPT_DEPLOYMENT string = openAiDeploymentName
+output AZURE_OPENAI_CHATGPT_DEPLOYMENT string = gptDeploymentName
 output AZURE_OPENAI_ENDPOINT string = openAi.outputs.endpoint
 output AZURE_OPENAI_RESOURCE string = openAi.outputs.name
 output AZURE_OPENAI_RESOURCE_GROUP string = openAiResourceGroup.name
-output AZURE_OPENAI_SKU_NAME string = openAi.outputs.skuName
 output AZURE_OPENAI_RESOURCE_GROUP_LOCATION string = openAiResourceGroup.location
 
 output SERVICE_ACA_IDENTITY_PRINCIPAL_ID string = aca.outputs.SERVICE_ACA_IDENTITY_PRINCIPAL_ID

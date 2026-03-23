@@ -20,5 +20,4 @@ If you already have an OpenAI resource and would like to re-use it, run `azd env
 azd env set AZURE_OPENAI_RESOURCE {name of OpenAI resource}
 azd env set AZURE_OPENAI_RESOURCE_GROUP {name of resource group that it's inside}
 azd env set AZURE_OPENAI_RESOURCE_GROUP_LOCATION {location for that group}
-azd env set AZURE_OPENAI_SKU_NAME {name of the SKU, defaults to "S0"}
 ```
