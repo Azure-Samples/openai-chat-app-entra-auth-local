@@ -164,17 +164,18 @@ async def chat_handler(*, context):
             {"role": "system", "content": "You are a helpful assistant."},
         ] + request_messages
 
-        chat_coroutine = bp.openai_client.chat.completions.create(
-            # Azure Open AI takes the deployment name as the model name
+        chat_coroutine = bp.openai_client.responses.create(
             model=os.environ["AZURE_OPENAI_CHATGPT_DEPLOYMENT"],
-            messages=all_messages,
+            input=all_messages,
             stream=True,
+            store=False,
         )
         try:
             async for event in await chat_coroutine:
-                event_dict = event.model_dump()
-                if event_dict["choices"]:
-                    yield json.dumps(event_dict["choices"][0], ensure_ascii=False) + "\n"
+                if event.type == "response.output_text.delta":
+                    yield json.dumps({"delta": {"content": event.delta}}, ensure_ascii=False) + "\n"
+                elif event.type == "response.completed":
+                    yield json.dumps({"delta": {"content": None}, "finish_reason": "stop"}, ensure_ascii=False) + "\n"
         except Exception as e:
             current_app.logger.error(e)
             yield json.dumps({"error": str(e)}, ensure_ascii=False) + "\n"
