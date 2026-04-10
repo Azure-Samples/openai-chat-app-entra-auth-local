@@ -57,7 +57,13 @@
         const userTemplate = document.querySelector('#message-template-user');
         const assistantTemplate = document.querySelector('#message-template-assistant');
         const converter = new showdown.Converter();
-        const messages = [];
+        const messages = [
+            {
+                type: "message",
+                role: "system",
+                content: [{ type: "input_text", text: "You are a helpful assistant." }]
+            }
+        ];
 
         form.addEventListener("submit", async function(e) {
             e.preventDefault();
@@ -72,40 +78,50 @@
             targetContainer.appendChild(assistantTemplateClone);
 
             messages.push({
-                "role": "user",
-                "content": message
+                type: "message",
+                role: "user",
+                content: [{ type: "input_text", text: message }]
             });
 
-            const response = await fetch("/chat/stream", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({messages: messages}),
-            });
+            try {
+                const response = await fetch("/chat/stream", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({ input: messages }),
+                });
 
-            let answer = "";
-            for await (const chunk of readNDJSONStream(response.body)) {
-                if (chunk.error) {
-                    messageDiv.innerHTML = "Error: " + chunk.error;
-                    break;
+                if (!response.ok) {
+                    throw new Error(`Request failed with status ${response.status}`);
                 }
-                if (!chunk.delta) {
-                    continue;
+
+                if (!response.body) {
+                    throw new Error("Streaming response body was empty.");
                 }
-                if (chunk.delta.content) {
-                    if (answer == "") {
-                        messageDiv.innerHTML = "";
+
+                let answer = "";
+                for await (const chunk of readNDJSONStream(response.body)) {
+                    if (chunk.type === "response.output_text.delta" && chunk.delta) {
+                        if (answer == "") {
+                            messageDiv.innerHTML = "";
+                        }
+                        answer += chunk.delta;
+                        messageDiv.innerHTML = converter.makeHtml(answer);
+                        messageDiv.scrollIntoView();
                     }
-                    answer += chunk.delta.content;
-                    messageDiv.innerHTML = converter.makeHtml(answer);
-                    messageDiv.scrollIntoView();
+                    if (chunk.error) {
+                        messageDiv.innerHTML = "Error: " + chunk.error;
+                    }
                 }
-            }
-            messages.push({
-                "role": "assistant",
-                "content": answer
-            });
+                messages.push({
+                    type: "message",
+                    role: "assistant",
+                    content: [{ type: "output_text", text: answer }]
+                });
 
-            messageInput.value = "";
+                messageInput.value = "";
+            } catch (error) {
+                messageDiv.innerHTML = "Error: " + error;
+            }
         });
     </script>
 {% endblock %}

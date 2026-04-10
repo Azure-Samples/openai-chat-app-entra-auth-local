@@ -155,29 +155,21 @@ async def index(*, context):
 @bp.post("/chat/stream")
 @login_required
 async def chat_handler(*, context):
-    request_messages = (await request.get_json())["messages"]
+    request_input = (await request.get_json())["input"]
 
     @stream_with_context
     async def response_stream():
-        # This sends all messages, so API request may exceed token limits
-        all_messages = [
-            {"role": "system", "content": "You are a helpful assistant."},
-        ] + request_messages
-
-        chat_coroutine = bp.openai_client.responses.create(
-            model=os.environ["AZURE_OPENAI_CHATGPT_DEPLOYMENT"],
-            input=all_messages,
-            stream=True,
-            store=False,
-        )
         try:
-            async for event in await chat_coroutine:
-                if event.type == "response.output_text.delta":
-                    yield json.dumps({"delta": {"content": event.delta}}, ensure_ascii=False) + "\n"
-                elif event.type == "response.completed":
-                    yield json.dumps({"delta": {"content": None}, "finish_reason": "stop"}, ensure_ascii=False) + "\n"
+            async with bp.openai_client.responses.stream(
+                model=os.environ["AZURE_OPENAI_CHATGPT_DEPLOYMENT"],
+                input=request_input,
+                store=False,
+            ) as openai_stream:
+                async for event in openai_stream:
+                    if event.type == "response.output_text.delta":
+                        yield json.dumps(event.model_dump(), ensure_ascii=False) + "\n"
         except Exception as e:
-            current_app.logger.error(e)
+            current_app.logger.exception("Responses stream failed")
             yield json.dumps({"error": str(e)}, ensure_ascii=False) + "\n"
 
-    return Response(response_stream())
+    return Response(response_stream(), mimetype="application/x-ndjson")
