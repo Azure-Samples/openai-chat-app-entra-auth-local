@@ -86,7 +86,7 @@ hyperframe==6.1.0
     # via h2
 identity[quart]==0.11.0
     # via quartapp (pyproject.toml)
-idna==3.11
+idna==3.15
     # via
     #   anyio
     #   httpx
