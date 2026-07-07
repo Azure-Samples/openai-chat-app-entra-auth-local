@@ -147,16 +147,6 @@ Once you've opened the project in [Codespaces](#github-codespaces), in [Dev Cont
     azd deploy
     ```
 
-### CI/CD pipeline
-
-This project includes a Github workflow for deploying the resources to Azure
-on every push to main. That workflow requires several Azure-related authentication secrets
-to be stored as Github action secrets. To set that up, run:
-
-```shell
-azd pipeline config
-```
-
 ## Local development
 
 Assuming you've run the steps in [Opening the project](#opening-the-project) and have run `azd up`, you can now run the Quart app locally using the development server:
